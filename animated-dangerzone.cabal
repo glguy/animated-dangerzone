@@ -1,0 +1,32 @@
+name:                animated-dangerzone
+version:             0.1.0.0
+synopsis:            Game
+license:             BSD3
+license-file:        LICENSE
+author:              Eric Mertens
+maintainer:          emertens@gmail.com
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+executable ad-server
+  hs-source-dirs:      src
+  main-is:             Server.hs
+  other-extensions:    TemplateHaskell
+  build-depends:       base >=4.6 && <4.7,
+                       network >=2.4 && <2.5,
+                       containers >=0.5 && <0.6,
+                       binary >=0.5 && <0.6,
+                       networked-game,
+                       lens
+
+executable ad-client
+  hs-source-dirs:      src
+  main-is:             Client.hs
+  other-extensions:    TemplateHaskell
+  build-depends:       base >=4.6 && <4.7,
+                       network >=2.4 && <2.5,
+                       containers >=0.5 && <0.6,
+                       binary >=0.5 && <0.6,
+                       vty,
+                       networked-game
