@@ -1,4 +1,4 @@
-module Client where
+module Main where
 
 import AnimatedDangerzone.Types
 import Control.Concurrent
@@ -10,6 +10,7 @@ import Network
 import NetworkedGame.Packet
 import System.Environment
 import System.Exit
+import System.IO
 
 data GameEvent
   = VtyEvent Event
@@ -18,9 +19,13 @@ data GameEvent
 main = do
   [host] <- getArgs
   h      <- connectTo host (PortNumber 1600)
+  hPutStrLn stderr "a"
   Hello myCid     <- hGetPacketed h
+  hPutStrLn stderr "b"
   NewPlayer _ _ _ <- hGetPacketed h
+  hPutStrLn stderr "c"
   SetWorld w      <- hGetPacketed h
+  hPutStrLn stderr "d"
 
   events <- newChan
 
@@ -32,12 +37,14 @@ main = do
                     ev <- readChan events
                     case ev of
                       VtyEvent (EvKey KEsc _) -> exitSuccess
+                      NetEvent (SetWorld w1) -> loop w1
                       _ -> loop w
     in loop w
 
-networkThread events h = return ()
+networkThread events h = do p <- hGetPacketed h
+                            writeChan events (NetEvent p)
 
-userThread events = return ()
+userThread events = threadDelay (10 * 1000000)
 
 worldImage :: World -> Image
 worldImage w = vert_cat [

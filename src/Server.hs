@@ -5,11 +5,12 @@ import Control.Lens
 import NetworkedGame.Server
 import qualified Data.Map as Map
 import Network (PortID(..))
+import System.IO
 
 callbacks :: NetworkServer ClientMsg World
 callbacks = NetworkServer
   { serverPort          = PortNumber 1600
-  , eventsPerSecond     = 0 -- no timer yet
+  , eventsPerSecond     = -1 -- no timer yet
   , onTick              = myTick
   , onConnect           = myConnect
   , onDisconnect        = myDisconnect
@@ -22,9 +23,11 @@ myTick hs elapsed w = return w
 myConnect :: Handles -> ConnectionId -> World -> IO World
 myConnect hs con w =
   do let w' = w & worldPlayers . at con ?~ emptyPlayer
+     putStrLn "Connection"
      announceOne hs con $ Hello con
      announce hs        $ NewPlayer con "Unknown" (0,0) -- XXX: work out names
      announceOne hs con $ SetWorld w'
+     putStrLn "Sent messages"
      return w'
 
 myDisconnect :: Handles -> ConnectionId -> World -> IO World
