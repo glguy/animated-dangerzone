@@ -29,4 +29,5 @@ executable ad-client
                        containers >=0.5 && <0.6,
                        binary >=0.5 && <0.6,
                        vty,
-                       networked-game
+                       networked-game,
+                       lens
