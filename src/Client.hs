@@ -30,7 +30,6 @@ main = do
   events <- newChan
 
   forkIO $ forever $ networkThread events h
-  forkIO $ forever $ userThread events
 
   bracket mkVty shutdown $ \vty ->
     let loop w = do update vty (pic_for_image (worldImage w))
@@ -39,12 +38,14 @@ main = do
                       VtyEvent (EvKey KEsc _) -> exitSuccess
                       NetEvent (SetWorld w1) -> loop w1
                       _ -> loop w
-    in loop w
+    in do forkIO $ forever $ vtyThread vty events
+          loop w
 
 networkThread events h = do p <- hGetPacketed h
                             writeChan events (NetEvent p)
 
-userThread events = threadDelay (10 * 1000000)
+vtyThread vty events = do e <- next_event vty
+                          writeChan events (VtyEvent e)
 
 worldImage :: World -> Image
 worldImage w = vert_cat [
