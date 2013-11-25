@@ -31,7 +31,7 @@ data Block
   = Rock
   | Rubble
   | Air
-  deriving (Read, Show)
+  deriving (Read, Show, Ord, Eq)
 
 data Player = Player
   { _playerName :: String
