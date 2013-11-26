@@ -35,10 +35,15 @@ myDisconnect hs c w =
 
 myCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
 myCommand hs c msg w =
+  -- Depending on whether this connection corresponds to a known player, handle
+  -- the message differently.
+  case w^.worldPlayers.at c of
+    Nothing -> handleUnknownPlayerCommand hs c msg w
+    Just _ -> handleKnownPlayerCommand hs c msg w
+
+handleUnknownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
+handleUnknownPlayerCommand hs c msg w =
   case msg of
-    ClientMove coord -> do announce hs $ MovePlayer c coord
-                           let w' = w & worldPlayers . ix c . playerCoord .~ coord
-                           return w'
     ClientHello name -> do
       let w' = w & worldPlayers . at c ?~ p
 	  p = newPlayer name
@@ -47,6 +52,15 @@ myCommand hs c msg w =
       announce hs      $ NewPlayer c (p^.playerName) (p^.playerCoord)
       announceOne hs c $ SetWorld w'
       return w'
+    _ -> return w
+
+handleKnownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
+handleKnownPlayerCommand hs c msg w =
+  case msg of
+    ClientMove coord -> do announce hs $ MovePlayer c coord
+                           let w' = w & worldPlayers . ix c . playerCoord .~ coord
+                           return w'
+    _ -> return w
 
 initialWorld :: World
 initialWorld = World
