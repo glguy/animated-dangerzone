@@ -24,6 +24,7 @@ data ServerMsg
 data World = World
   { _worldBlocks :: Map Coord Block
   , _worldPlayers :: Map ConnectionId Player
+  , _worldPastPlayers :: Map String Player
   }
   deriving (Read, Show)
 

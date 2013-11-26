@@ -26,13 +26,15 @@ myConnect hs con w = return w
 
 myDisconnect :: Handles -> ConnectionId -> World -> IO World
 myDisconnect hs c w =
-  do announce hs        $ QuitPlayer c
-     let w' = w & worldPlayers . at c .~ Nothing
-	 p = w^.worldPlayers.at c
-     case p of
-       Nothing -> putStrLn "User disconnected: (unknown)"
-       Just player -> putStrLn $ "User disconnected: " ++ player^.playerName
-     return w'
+  do case w^.worldPlayers.at c of
+       Nothing -> do putStrLn "User disconnected: (unknown)"
+                     return w
+       Just p -> do
+	  let w' = w & worldPlayers . at c .~ Nothing
+                     & worldPastPlayers . at (p^.playerName) .~ (Just p)
+          announce hs        $ QuitPlayer c
+          putStrLn $ "User disconnected: " ++ p^.playerName
+          return w'
 
 myCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
 myCommand hs c msg w =
@@ -49,7 +51,7 @@ handleUnknownPlayerCommand hs c msg w =
     ClientHello name -> do
       -- Use the player data already in the world (if previously connected) or
       -- create a new player record otherwise.
-      let Just p = w^.worldPlayers.at c <|> Just (newPlayer name)
+      let Just p = w^.worldPastPlayers.at name <|> Just (newPlayer name)
           w' = w & worldPlayers . at c ?~ p
 
       putStrLn $ "User connected: " ++ name
@@ -73,6 +75,7 @@ initialWorld :: World
 initialWorld = World
   { _worldPlayers = Map.empty
   , _worldBlocks  = Map.fromList [((r,c), Rock) | r <- [-10..10], c <- [-10..10]]
+  , _worldPastPlayers = Map.empty
   }
 
 newPlayer :: String -> Player
