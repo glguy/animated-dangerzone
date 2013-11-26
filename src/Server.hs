@@ -2,6 +2,7 @@ module Main where
 
 import AnimatedDangerzone.Types
 import Control.Lens
+import Control.Applicative
 import NetworkedGame.Server
 import qualified Data.Map as Map
 import Network (PortID(..))
@@ -46,9 +47,14 @@ handleUnknownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> I
 handleUnknownPlayerCommand hs c msg w =
   case msg of
     ClientHello name -> do
-      let w' = w & worldPlayers . at c ?~ p
-	  p = newPlayer name
+      -- Use the player data already in the world (if previously connected) or
+      -- create a new player record otherwise.
+      let Just p = w^.worldPlayers.at c <|> Just (newPlayer name)
+          w' = w & worldPlayers . at c ?~ p
+
       putStrLn $ "User connected: " ++ name
+      putStrLn $ "  player info:  " ++ show p
+
       announceOne hs c $ Hello c
       announce hs      $ NewPlayer c (p^.playerName) (p^.playerCoord)
       announceOne hs c $ SetWorld w'
