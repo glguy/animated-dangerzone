@@ -4,17 +4,14 @@ import qualified Data.Map as M
 import Network
 import NetworkedGame.Packet
 import Control.Concurrent
-import Control.Concurrent.MVar
 import Control.Monad
 import Control.Lens
 import System.Environment
-import System.Exit
 import System.IO
 import AnimatedDangerzone.Types
 import Graphics.Gloss
 import Graphics.Gloss.Juicy
 import Graphics.Gloss.Interface.IO.Game
-import Graphics.Gloss.Data.Picture
 
 tileFiles :: [(Block, FilePath)]
 tileFiles =
@@ -37,13 +34,13 @@ main = do
 
   [host] <- getArgs
   h      <- connectTo host (PortNumber 1600)
-  Hello myCid     <- hGetPacketed h
+  Hello _myCid    <- hGetPacketed h
   -- XXX: race condition here?
   NewPlayer _ _ _ <- hGetPacketed h
   SetWorld initialWorld <- hGetPacketed h
 
   wmvar <- newMVar initialWorld
-  forkIO $ forever $ networkThread h wmvar
+  _ <- forkIO $ forever $ networkThread h wmvar
 
   let eventsPerSecond = 1
       dpy = FullScreen (1024, 768)
@@ -71,10 +68,7 @@ networkThread h worldMVar = do
   putStrLn $ "Got server packet: " ++ show p
   case p of
     SetWorld w -> putMVar worldMVar w
-    Hello cid -> return ()
-    QuitPlayer cid -> return ()
-    NewPlayer cid s coord -> return ()
-    MovePlayer cid coord -> return ()
+    _ -> return ()
 
 worldPicture :: M.Map Block Picture -> World -> Picture
 worldPicture tileMap w =
