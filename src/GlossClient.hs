@@ -16,16 +16,20 @@ import Graphics.Gloss.Juicy
 import Graphics.Gloss.Interface.IO.Game
 import Graphics.Gloss.Data.Picture
 
+tileFiles :: [(Block, FilePath)]
+tileFiles =
+  [ (Air, "images/tiles/dc-dngn/dngn_unseen.png")
+  , (Rubble, "images/tiles/dc-dngn/floor/cobble_blood5.png")
+  , (Rock, "images/tiles/dc-dngn/floor/cobble_blood1.png")
+  ]
+
 loadTileMap :: IO (M.Map Block Picture)
 loadTileMap = do
-  let m = M.empty
-  Just rock <- loadJuicy "images/tiles/dc-dngn/floor/cobble_blood1.png"
-  Just air <- loadJuicy "images/tiles/dc-dngn/dngn_unseen.png"
-  Just rubble <- loadJuicy "images/tiles/dc-dngn/floor/cobble_blood5.png"
-  return $ M.fromList [ (Air, air)
-		      , (Rock, rock)
-		      , (Rubble, rubble)
-		      ]
+  pairs <- forM tileFiles $ \(blk, path) ->
+	   do Just p <- loadJuicy path
+	      return (blk, p)
+
+  return $ M.fromList pairs
 
 main :: IO ()
 main = do
