@@ -21,19 +21,16 @@ myTick :: Handles -> Float -> World -> IO World
 myTick hs elapsed w = return w
 
 myConnect :: Handles -> ConnectionId -> World -> IO World
-myConnect hs con w =
-  do let w' = w & worldPlayers . at con ?~ emptyPlayer
-     putStrLn "Connection"
-     announceOne hs con $ Hello con
-     announce hs        $ NewPlayer con "Unknown" (0,0) -- XXX: work out names
-     announceOne hs con $ SetWorld w'
-     putStrLn "Sent messages"
-     return w'
+myConnect hs con w = return w
 
 myDisconnect :: Handles -> ConnectionId -> World -> IO World
 myDisconnect hs c w =
   do announce hs        $ QuitPlayer c
      let w' = w & worldPlayers . at c .~ Nothing
+	 p = w^.worldPlayers.at c
+     case p of
+       Nothing -> putStrLn "User disconnected: (unknown)"
+       Just player -> putStrLn $ "User disconnected: " ++ player^.playerName
      return w'
 
 myCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
@@ -42,7 +39,14 @@ myCommand hs c msg w =
     ClientMove coord -> do announce hs $ MovePlayer c coord
                            let w' = w & worldPlayers . ix c . playerCoord .~ coord
                            return w'
-    _ -> return w
+    ClientHello name -> do
+      let w' = w & worldPlayers . at c ?~ p
+	  p = newPlayer name
+      putStrLn $ "User connected: " ++ name
+      announceOne hs c $ Hello c
+      announce hs      $ NewPlayer c (p^.playerName) (p^.playerCoord)
+      announceOne hs c $ SetWorld w'
+      return w'
 
 initialWorld :: World
 initialWorld = World
@@ -50,9 +54,9 @@ initialWorld = World
   , _worldBlocks  = Map.fromList [((r,c), Rock) | r <- [-10..10], c <- [-10..10]]
   }
 
-emptyPlayer :: Player
-emptyPlayer = Player
-  { _playerName         = "Unknown player"
+newPlayer :: String -> Player
+newPlayer name = Player
+  { _playerName         = name
   , _playerCoord        = (0,0)
   }
 

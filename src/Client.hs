@@ -17,8 +17,9 @@ data GameEvent
   | NetEvent ServerMsg
 
 main = do
-  [host] <- getArgs
+  [host, name] <- getArgs
   h      <- connectTo host (PortNumber 1600)
+  hPutPacket h $ mkPacket $ ClientHello name
   hPutStrLn stderr "a"
   Hello myCid     <- hGetPacketed h
   hPutStrLn stderr "b"

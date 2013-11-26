@@ -32,8 +32,9 @@ main :: IO ()
 main = do
   tileMap <- loadTileMap
 
-  [host] <- getArgs
+  [host, name] <- getArgs
   h      <- connectTo host (PortNumber 1600)
+  hPutPacket h $ mkPacket $ ClientHello name
   Hello _myCid    <- hGetPacketed h
   NewPlayer _ _ _ <- hGetPacketed h
   SetWorld initialWorld <- hGetPacketed h
