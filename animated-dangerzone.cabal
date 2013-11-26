@@ -46,8 +46,6 @@ executable ad-glossclient
                        binary >=0.5,
                        gloss,
                        gloss-juicy,
-                       vty,
-                       vty-ui,
                        networked-game,
                        lens,
                        text
