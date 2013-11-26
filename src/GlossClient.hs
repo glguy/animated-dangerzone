@@ -35,7 +35,6 @@ main = do
   [host] <- getArgs
   h      <- connectTo host (PortNumber 1600)
   Hello _myCid    <- hGetPacketed h
-  -- XXX: race condition here?
   NewPlayer _ _ _ <- hGetPacketed h
   SetWorld initialWorld <- hGetPacketed h
 
