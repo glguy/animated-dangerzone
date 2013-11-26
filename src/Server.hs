@@ -37,9 +37,10 @@ myCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
 myCommand hs c msg w =
   -- Depending on whether this connection corresponds to a known player, handle
   -- the message differently.
-  case w^.worldPlayers.at c of
-    Nothing -> handleUnknownPlayerCommand hs c msg w
-    Just _ -> handleKnownPlayerCommand hs c msg w
+  let handler = case w^.worldPlayers.at c of
+                  Nothing -> handleUnknownPlayerCommand
+                  Just _ -> handleKnownPlayerCommand
+  in handler hs c msg w
 
 handleUnknownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
 handleUnknownPlayerCommand hs c msg w =
