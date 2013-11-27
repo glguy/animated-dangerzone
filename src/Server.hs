@@ -66,7 +66,8 @@ handleUnknownPlayerCommand hs c msg w =
 handleKnownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
 handleKnownPlayerCommand hs c msg w =
   case msg of
-    ClientMove coord -> do announce hs $ MovePlayer c coord
+    ClientMove coord -> do putStrLn $ "Player " ++ show c ++ " moved to " ++ show coord
+			   announce hs $ MovePlayer c coord
                            let w' = w & worldPlayers . ix c . playerCoord .~ coord
                            return w'
     _ -> return w
