@@ -1,4 +1,6 @@
 dist
+.*.swp
+.DS_Store
 cabal-dev
 *.o
 *.hi
