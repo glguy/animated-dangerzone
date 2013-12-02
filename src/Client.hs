@@ -28,7 +28,7 @@ main = withClientArgs $ \opts _ -> do
                      exitFailure
              _ -> do putStrLn "Protocol error: got unexpected message"
                      exitFailure
-  NewPlayer _ _ _ <- hGetPacketed h
+  NewPlayer _ _   <- hGetPacketed h
   SetWorld w      <- hGetPacketed h
 
   events <- newChan

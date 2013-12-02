@@ -79,7 +79,7 @@ main = do
                _ -> do putStrLn "Protocol error: got unexpected message"
                        exitFailure
 
-    NewPlayer _ _ _ <- hGetPacketed h
+    NewPlayer _ _ <- hGetPacketed h
     SetWorld initialWorld <- hGetPacketed h
 
     wmvar <- newMVar $ clientState h myCid initialWorld

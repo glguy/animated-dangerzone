@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
 import AnimatedDangerzone.Types
@@ -8,7 +9,14 @@ import qualified Data.Map as Map
 import Network (PortID(..))
 import System.IO
 
-callbacks :: NetworkServer ClientMsg World
+data ServerState =
+  ServerState { _pastPlayers :: Map.Map String Player
+              , _serverWorld :: World
+              }
+
+makeLenses ''ServerState
+
+callbacks :: NetworkServer ClientMsg ServerState
 callbacks = NetworkServer
   { serverPort          = PortNumber 1600
   , eventsPerSecond     = -1 -- no timer yet
@@ -18,66 +26,66 @@ callbacks = NetworkServer
   , onCommand           = myCommand
   }
 
-myTick :: Handles -> Float -> World -> IO World
-myTick hs elapsed w = return w
+myTick :: Handles -> Float -> ServerState -> IO ServerState
+myTick hs elapsed st = return st
 
-myConnect :: Handles -> ConnectionId -> World -> IO World
-myConnect hs con w = return w
+myConnect :: Handles -> ConnectionId -> ServerState -> IO ServerState
+myConnect hs con st = return st
 
-myDisconnect :: Handles -> ConnectionId -> World -> IO World
-myDisconnect hs c w =
-  do case w^.worldPlayers.at c of
+myDisconnect :: Handles -> ConnectionId -> ServerState -> IO ServerState
+myDisconnect hs c st =
+  do case st^.serverWorld.worldPlayers.at c of
        Nothing -> do putStrLn "User disconnected: (unknown)"
-                     return w
+                     return st
        Just p -> do
-	  let w' = w & worldPlayers . at c .~ Nothing
-                     & worldPastPlayers . at (p^.playerName) .~ (Just p)
+          let st' = st & serverWorld . worldPlayers . at c .~ Nothing
+                       & pastPlayers . at (p^.playerName) .~ (Just p)
           announce hs        $ QuitPlayer c
           putStrLn $ "User disconnected: " ++ p^.playerName
-          return w'
+          return st'
 
-myCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
-myCommand hs c msg w =
+myCommand :: Handles -> ConnectionId -> ClientMsg -> ServerState -> IO ServerState
+myCommand hs c msg st =
   -- Depending on whether this connection corresponds to a known player, handle
   -- the message differently.
-  let handler = case w^.worldPlayers.at c of
+  let handler = case st^.serverWorld.worldPlayers.at c of
                   Nothing -> handleUnknownPlayerCommand
                   Just _ -> handleKnownPlayerCommand
-  in handler hs c msg w
+  in handler hs c msg st
 
-handleUnknownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
-handleUnknownPlayerCommand hs c msg w =
+handleUnknownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> ServerState -> IO ServerState
+handleUnknownPlayerCommand hs c msg st =
   case msg of
     ClientHello name -> do
       -- If the name corresponds to a logged-in user, send a conflict response;
       -- else log the user in.
-      case any ((== name) . _playerName) $ Map.elems (w^.worldPlayers) of
+      case any ((== name) . _playerName) $ Map.elems (st^.serverWorld.worldPlayers) of
         True -> do
           announceOne hs c UsernameConflict
-	  return w
-	False -> do
+          return st
+        False -> do
           -- Use the player data already in the world (if previously connected) or
           -- create a new player record otherwise.
-          let Just p = w^.worldPastPlayers.at name <|> Just (newPlayer name)
-              w' = w & worldPlayers . at c ?~ p
+          let Just p = st^.pastPlayers.at name <|> Just (newPlayer name)
+              st' = st & serverWorld . worldPlayers . at c ?~ p
     
           putStrLn $ "User connected: " ++ name
           putStrLn $ "  player info:  " ++ show p
     
           announceOne hs c $ Hello c
-          announce hs      $ NewPlayer c (p^.playerName) (p^.playerCoord)
-          announceOne hs c $ SetWorld w'
-          return w'
-    _ -> return w
+          announce hs      $ NewPlayer c p
+          announceOne hs c $ SetWorld (st'^.serverWorld)
+          return st'
+    _ -> return st
 
-handleKnownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World
-handleKnownPlayerCommand hs c msg w =
+handleKnownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> ServerState -> IO ServerState
+handleKnownPlayerCommand hs c msg st =
   case msg of
     ClientMove coord -> do putStrLn $ "Player " ++ show c ++ " moved to " ++ show coord
 			   announce hs $ MovePlayer c coord
-                           let w' = w & worldPlayers . ix c . playerCoord .~ coord
-                           return w'
-    _ -> return w
+                           let st' = st & serverWorld . worldPlayers . ix c . playerCoord .~ coord
+                           return st'
+    _ -> return st
 
 initialWorld :: World
 initialWorld = World
@@ -86,7 +94,6 @@ initialWorld = World
 				 | (r, row) <- zip [0..] $ reverse blocks
 				 , (c, b) <- zip [0..] row
 				 ]
-  , _worldPastPlayers = Map.empty
   }
 
 blocks :: [[Block]]
@@ -113,5 +120,11 @@ newPlayer name = Player
   , _playerCoord        = (0,0)
   }
 
+initialState :: ServerState
+initialState = ServerState
+  { _serverWorld = initialWorld
+  , _pastPlayers = Map.empty
+  }
+
 main :: IO ()
-main = serverMain callbacks initialWorld
+main = serverMain callbacks initialState

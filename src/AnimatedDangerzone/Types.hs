@@ -18,14 +18,13 @@ data ServerMsg
   | Hello ConnectionId
   | UsernameConflict
   | QuitPlayer ConnectionId
-  | NewPlayer ConnectionId String Coord
+  | NewPlayer ConnectionId Player
   | MovePlayer ConnectionId Coord
   deriving (Read, Show)
 
 data World = World
   { _worldBlocks :: Map Coord Block
   , _worldPlayers :: Map ConnectionId Player
-  , _worldPastPlayers :: Map String Player
   }
   deriving (Read, Show)
 
