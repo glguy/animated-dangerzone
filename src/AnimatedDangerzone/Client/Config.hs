@@ -56,13 +56,20 @@ options =
 
 handleArgs :: [String] -> IO (Options, [String])
 handleArgs args = do
-  let (actions, rest, _) = getOpt RequireOrder options args
-  opts <- foldl (>>=) (return defaultOptions) actions
-  return (opts, rest)
+  let (actions, rest, errs) = getOpt RequireOrder options args
+  case errs of
+    [] -> do
+      opts <- foldl (>>=) (return defaultOptions) actions
+      return (opts, rest)
+    _  -> do
+      prg <- getProgName
+      hPutStrLn stderr (usageInfo prg options)
+      mapM_ (hPutStrLn stderr) errs
+      exitWith (ExitFailure 1)
 
 withArgs :: (Options -> [String] -> IO a) -> IO a
 withArgs io = do
-  args <- getArgs
+  args        <- getArgs
   (opts,rest) <- handleArgs args
   io opts rest
 
