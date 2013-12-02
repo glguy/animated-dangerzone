@@ -36,6 +36,9 @@ tileFiles =
   [ (TEnv Air,        "images/tiles/dc-dngn/dngn_unseen.png")
   , (TEnv Rubble,     "images/tiles/dc-dngn/floor/cobble_blood5.png")
   , (TEnv Rock,       "images/tiles/dc-dngn/floor/cobble_blood1.png")
+  , (TEnv Stones,     "images/tiles/dc-dngn/floor/floor_vines0.png")
+  , (TEnv Lava,       "images/tiles/dc-dngn/floor/lava0.png")
+  , (TEnv Ice,        "images/tiles/dc-dngn/floor/ice0.png")
   , (TPlayer,         "images/tiles/player/base/human_m.png")
   ]
 

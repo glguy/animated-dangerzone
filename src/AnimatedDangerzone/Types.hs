@@ -31,6 +31,9 @@ data World = World
 data Block
   = Rock
   | Rubble
+  | Ice
+  | Lava
+  | Stones
   | Air
   deriving (Read, Show, Ord, Eq)
 

@@ -75,9 +75,30 @@ handleKnownPlayerCommand hs c msg w =
 initialWorld :: World
 initialWorld = World
   { _worldPlayers = Map.empty
-  , _worldBlocks  = Map.fromList [((r,c), Rock) | r <- [-10..10], c <- [-10..10]]
+  , _worldBlocks  = Map.fromList [ ((r,c), b)
+				 | (r, row) <- zip [0..] $ reverse blocks
+				 , (c, b) <- zip [0..] row
+				 ]
   , _worldPastPlayers = Map.empty
   }
+
+blocks :: [[Block]]
+blocks =
+  [ [Air,   Air,   Air,   Rock,  Rock,  Rock,  Rock,  Rock]
+  , [Air,   Rock,  Rock,  Air,   Air,   Air,   Air,   Air,   Rock,  Rock]
+  , [Rock,  Lava,  Stones,Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Rock,  Lava,  Stones,Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Rock,  Lava,  Stones,Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Rock,  Stones,Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Rock,  Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Rock,  Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Rock,  Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Rock,  Air,   Air,   Air,   Air,   Air,   Air,   Ice,   Ice,   Air,   Rock]
+  , [Rock,  Air,   Air,   Air,   Air,   Air,   Air,   Air,   Ice,   Air,   Rock]
+  , [Rock,  Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Air,   Rock]
+  , [Air,   Rock,  Rock,  Air,   Air,   Air,   Air,   Air,   Rock, Rock]
+  , [Air,   Air,   Air,   Rock,  Rock,  Rock,  Rock,  Rock]
+  ]
 
 newPlayer :: String -> Player
 newPlayer name = Player
