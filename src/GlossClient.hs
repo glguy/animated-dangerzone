@@ -3,18 +3,20 @@ module Main where
 
 import qualified Data.Map as M
 import Network
+import Network.Socket ( PortNumber(..) )
 import NetworkedGame.Packet
 import NetworkedGame.Server
 import Control.Concurrent
 import Control.Monad
 import Control.Lens
 import Data.Maybe
-import System.Environment
 import System.IO
 import AnimatedDangerzone.Types
 import Graphics.Gloss
 import Graphics.Gloss.Juicy
 import Graphics.Gloss.Interface.IO.Game
+
+import AnimatedDangerzone.Client.Config as C
 
 data ClientState =
   ClientState { _clientCid :: ConnectionId
@@ -61,26 +63,27 @@ main :: IO ()
 main = do
   tileMap <- loadTileMap
 
-  [host, name] <- getArgs
-  h      <- connectTo host (PortNumber 1600)
-  hPutPacket h $ mkPacket $ ClientHello name
-  Hello myCid    <- hGetPacketed h
-  NewPlayer _ _ _ <- hGetPacketed h
-  SetWorld initialWorld <- hGetPacketed h
+  withArgs $ \opts _ -> do
+    h      <- connectTo (opts^.C.serverName)
+                        (PortNumber (PortNum (opts^.C.portNumber)))
+    hPutPacket h $ mkPacket $ ClientHello (opts^.C.playerName)
+    Hello myCid    <- hGetPacketed h
+    NewPlayer _ _ _ <- hGetPacketed h
+    SetWorld initialWorld <- hGetPacketed h
 
-  wmvar <- newMVar $ clientState h myCid initialWorld
-  _ <- forkIO $ forever $ networkThread h wmvar
+    wmvar <- newMVar $ clientState h myCid initialWorld
+    _ <- forkIO $ forever $ networkThread h wmvar
 
-  let dpy = InWindow "game" (700, 700) (0, 0)
+    let dpy = InWindow "game" (700, 700) (0, 0)
 
-  playIO
-    dpy
-    white
-    60
-    ()
-    (const $ worldPicture wmvar tileMap)
-    (handleEvent wmvar)
-    stepWorld
+    playIO
+      dpy
+      white
+      60
+      ()
+      (const $ worldPicture wmvar tileMap)
+      (handleEvent wmvar)
+      stepWorld
 
 moveUp :: MVar ClientState -> IO ()
 moveUp mv = movePlayer mv (_1 +~ 1)
