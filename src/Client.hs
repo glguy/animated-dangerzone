@@ -1,6 +1,7 @@
 module Main where
 
 import AnimatedDangerzone.Types
+import AnimatedDangerzone.Client.Config
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
@@ -16,10 +17,9 @@ data GameEvent
   = VtyEvent Event
   | NetEvent ServerMsg
 
-main = do
-  [host, name] <- getArgs
-  h      <- connectTo host (PortNumber 1600)
-  hPutPacket h $ mkPacket $ ClientHello name
+main = withClientArgs $ \opts _ -> do
+  h      <- connectTo (opts^.optServerName) (PortNumber $ opts^.optPortNumber)
+  hPutPacket h $ mkPacket $ ClientHello $ opts^.optPlayerName
   hPutStrLn stderr "a"
   Hello myCid     <- hGetPacketed h
   hPutStrLn stderr "b"

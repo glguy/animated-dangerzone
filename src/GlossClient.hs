@@ -65,10 +65,10 @@ main :: IO ()
 main = do
   tileMap <- loadTileMap
 
-  withArgs $ \opts _ -> do
-    h      <- connectTo (opts^.C.serverName)
-                        (PortNumber (opts^.C.portNumber))
-    hPutPacket h $ mkPacket $ ClientHello (opts^.C.playerName)
+  withClientArgs $ \opts _ -> do
+    h      <- connectTo (opts^.optServerName)
+                        (PortNumber (opts^.optPortNumber))
+    hPutPacket h $ mkPacket $ ClientHello (opts^.optPlayerName)
     Hello myCid    <- hGetPacketed h
     NewPlayer _ _ _ <- hGetPacketed h
     SetWorld initialWorld <- hGetPacketed h
