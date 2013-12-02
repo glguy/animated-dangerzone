@@ -2,7 +2,7 @@
 module AnimatedDangerzone.Client.Config where
 
 import Control.Lens ( makeLenses )
-import Data.Word ( Word16 )
+import Network.Socket ( PortNumber )
 import System.Console.GetOpt ( OptDescr(..), ArgDescr(..), ArgOrder(..), usageInfo, getOpt )
 import System.Environment ( getProgName, getArgs )
 import System.Exit ( exitWith, ExitCode(..) )
@@ -11,9 +11,9 @@ import Text.Read ( readMaybe )
 
 data Options = Options
   { _serverName :: String
-  , _portNumber :: Word16
+  , _portNumber :: PortNumber
   , _playerName :: String
-  } deriving (Read, Show, Eq, Ord)
+  } deriving (Show, Eq, Ord)
 
 makeLenses ''Options
 
@@ -32,7 +32,7 @@ options =
         case readMaybe arg of
         Nothing -> do hPutStrLn stderr ("Invalid port number: " ++ arg)
                       exitWith (ExitFailure 1)
-        Just n  -> return o { _portNumber = n })
+        Just n  -> return o { _portNumber = toEnum n })
       "NUMBER")
     "Port to connect to on server."
   , Option "s" ["server"]

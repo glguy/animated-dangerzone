@@ -3,7 +3,6 @@ module Main where
 
 import qualified Data.Map as M
 import Network
-import Network.Socket ( PortNumber(..) )
 import NetworkedGame.Packet
 import NetworkedGame.Server
 import Control.Concurrent
@@ -68,7 +67,7 @@ main = do
 
   withArgs $ \opts _ -> do
     h      <- connectTo (opts^.C.serverName)
-                        (PortNumber (PortNum (opts^.C.portNumber)))
+                        (PortNumber (opts^.C.portNumber))
     hPutPacket h $ mkPacket $ ClientHello (opts^.C.playerName)
     Hello myCid    <- hGetPacketed h
     NewPlayer _ _ _ <- hGetPacketed h
