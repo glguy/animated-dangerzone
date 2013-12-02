@@ -21,7 +21,14 @@ main = withClientArgs $ \opts _ -> do
   h      <- connectTo (opts^.optServerName) (PortNumber $ opts^.optPortNumber)
   hPutPacket h $ mkPacket $ ClientHello $ opts^.optPlayerName
   hPutStrLn stderr "a"
-  Hello myCid     <- hGetPacketed h
+  resp <- hGetPacketed h
+  myCid <- case resp of
+             Hello myCid -> return myCid
+             UsernameConflict -> do
+                     putStrLn "User already connected; please choose a different username."
+                     exitFailure
+             _ -> do putStrLn "Protocol error: got unexpected message"
+                     exitFailure
   hPutStrLn stderr "b"
   NewPlayer _ _ _ <- hGetPacketed h
   hPutStrLn stderr "c"

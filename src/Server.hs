@@ -49,18 +49,25 @@ handleUnknownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> I
 handleUnknownPlayerCommand hs c msg w =
   case msg of
     ClientHello name -> do
-      -- Use the player data already in the world (if previously connected) or
-      -- create a new player record otherwise.
-      let Just p = w^.worldPastPlayers.at name <|> Just (newPlayer name)
-          w' = w & worldPlayers . at c ?~ p
-
-      putStrLn $ "User connected: " ++ name
-      putStrLn $ "  player info:  " ++ show p
-
-      announceOne hs c $ Hello c
-      announce hs      $ NewPlayer c (p^.playerName) (p^.playerCoord)
-      announceOne hs c $ SetWorld w'
-      return w'
+      -- If the name corresponds to a logged-in user, send a conflict response;
+      -- else log the user in.
+      case any ((== name) . _playerName) $ Map.elems (w^.worldPlayers) of
+        True -> do
+          announceOne hs c UsernameConflict
+	  return w
+	False -> do
+          -- Use the player data already in the world (if previously connected) or
+          -- create a new player record otherwise.
+          let Just p = w^.worldPastPlayers.at name <|> Just (newPlayer name)
+              w' = w & worldPlayers . at c ?~ p
+    
+          putStrLn $ "User connected: " ++ name
+          putStrLn $ "  player info:  " ++ show p
+    
+          announceOne hs c $ Hello c
+          announce hs      $ NewPlayer c (p^.playerName) (p^.playerCoord)
+          announceOne hs c $ SetWorld w'
+          return w'
     _ -> return w
 
 handleKnownPlayerCommand :: Handles -> ConnectionId -> ClientMsg -> World -> IO World

@@ -16,6 +16,7 @@ data ClientMsg
 data ServerMsg
   = SetWorld World
   | Hello ConnectionId
+  | UsernameConflict
   | QuitPlayer ConnectionId
   | NewPlayer ConnectionId String Coord
   | MovePlayer ConnectionId Coord

@@ -10,6 +10,7 @@ import Control.Monad
 import Control.Lens
 import Data.Maybe
 import System.IO
+import System.Exit
 import AnimatedDangerzone.Types
 import Graphics.Gloss
 import Graphics.Gloss.Juicy
@@ -69,7 +70,15 @@ main = do
     h      <- connectTo (opts^.optServerName)
                         (PortNumber (opts^.optPortNumber))
     hPutPacket h $ mkPacket $ ClientHello (opts^.optPlayerName)
-    Hello myCid    <- hGetPacketed h
+    resp <- hGetPacketed h
+    myCid <- case resp of
+               Hello myCid -> return myCid
+               UsernameConflict -> do
+                       putStrLn "User already connected; please choose a different username."
+                       exitFailure
+               _ -> do putStrLn "Protocol error: got unexpected message"
+                       exitFailure
+
     NewPlayer _ _ _ <- hGetPacketed h
     SetWorld initialWorld <- hGetPacketed h
 
